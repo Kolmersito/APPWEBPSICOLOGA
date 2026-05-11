@@ -1,3 +1,9 @@
+:root {
+  --vino: #6B1F2A;
+  --vino-light: #8B2D3C;
+  --vino-pale: #F5E8EA;
+  --vino-border: #C4404F;
+}
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

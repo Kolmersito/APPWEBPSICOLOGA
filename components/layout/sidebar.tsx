@@ -3,27 +3,18 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
 import {
-  Users,
-  Calendar,
-  FileText,
-  BookOpen,
-  LayoutDashboard,
-  LogOut,
-  Brain,
+  LayoutDashboard, Users, Calendar,
+  BookOpen, FileText, Brain, LogOut,
 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/pacientes', label: 'Pacientes', icon: Users },
-  { href: '/calendario', label: 'Calendario', icon: Calendar },
-  { href: '/materiales', label: 'Materiales', icon: BookOpen },
-  { href: '/informes', label: 'Informes', icon: FileText },
+  { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard },
+  { href: '/pacientes',   label: 'Pacientes',  icon: Users },
+  { href: '/calendario',  label: 'Calendario', icon: Calendar },
+  { href: '/materiales',  label: 'Materiales', icon: BookOpen },
+  { href: '/informes',    label: 'Informes',   icon: FileText },
 ]
 
 export function Sidebar({ user }: { user: User }) {
@@ -40,56 +31,46 @@ export function Sidebar({ user }: { user: User }) {
   const initials = user.email?.slice(0, 2).toUpperCase() ?? 'PS'
 
   return (
-    <aside className="w-64 border-r bg-card flex flex-col h-full">
-      {/* Logo */}
-      <div className="p-6 flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Brain className="h-5 w-5 text-primary" />
+    <aside style={{ width: 210, background: 'var(--vino)', display: 'flex', flexDirection: 'column', height: '100%', flexShrink: 0 }}>
+      <div style={{ padding: '20px 16px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,.12)' }}>
+        <div style={{ width: 32, height: 32, background: 'rgba(255,255,255,.15)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Brain size={16} color="#fff" />
         </div>
-        <span className="font-semibold text-lg">PsicoApp</span>
+        <span style={{ color: '#fff', fontSize: 15, fontWeight: 500 }}>PsicoApp</span>
       </div>
 
-      <Separator />
-
-      {/* Navegación */}
-      <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+      <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {navItems.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || pathname.startsWith(href + '/')
           return (
-            <Link key={item.href} href={item.href}>
-              <span className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer',
-                isActive
-                  ? 'bg-primary text-primary-foreground font-medium'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              )}>
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </span>
+            <Link key={href} href={href} style={{ textDecoration: 'none' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 10px', borderRadius: 6, fontSize: 13, cursor: 'pointer',
+                background: active ? 'rgba(255,255,255,.15)' : 'transparent',
+                color: active ? '#fff' : 'rgba(255,255,255,.65)',
+                fontWeight: active ? 500 : 400,
+              }}>
+                <Icon size={16} />
+                {label}
+              </div>
             </Link>
           )
         })}
       </nav>
 
-      <Separator />
-
-      {/* Usuario */}
-      <div className="p-4 flex items-center gap-3">
-        <Avatar className="h-8 w-8">
-          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+      <div style={{ padding: '12px 10px', borderTop: '1px solid rgba(255,255,255,.12)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 500, flexShrink: 0 }}>
+            {initials}
+          </div>
+          <span style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {user.email}
+          </span>
+          <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.5)', display: 'flex', padding: 4 }}>
+            <LogOut size={14} />
+          </button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 shrink-0"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
       </div>
     </aside>
   )
