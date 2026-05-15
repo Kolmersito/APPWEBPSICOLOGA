@@ -3,18 +3,15 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import {
-  LayoutDashboard, Users, Calendar,
-  BookOpen, FileText, Brain, LogOut,
-} from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, FileText, Brain, LogOut, Layers } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 
 const navItems = [
-  { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard },
-  { href: '/pacientes',   label: 'Pacientes',  icon: Users },
-  { href: '/calendario',  label: 'Calendario', icon: Calendar },
-  { href: '/materiales',  label: 'Materiales', icon: BookOpen },
-  { href: '/informes',    label: 'Informes',   icon: FileText },
+  { href: '/dashboard',  label: 'Inicio',     icon: LayoutDashboard },
+  { href: '/pacientes',  label: 'Pacientes',  icon: Users },
+  { href: '/materiales', label: 'Materiales', icon: BookOpen },
+  { href: '/informes',   label: 'Informes',   icon: FileText },
+  { href: '/servicios',  label: 'Servicios',  icon: Layers },
 ]
 
 export function Sidebar({ user }: { user: User }) {
@@ -36,7 +33,7 @@ export function Sidebar({ user }: { user: User }) {
         <div style={{ width: 32, height: 32, background: 'rgba(255,255,255,.15)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Brain size={16} color="#fff" />
         </div>
-        <span style={{ color: '#fff', fontSize: 15, fontWeight: 500 }}>PsicoApp</span>
+        <span style={{ color: '#fff', fontSize: 13, fontWeight: 500, lineHeight: 1.2 }}>Aplicación<br/>Prueba</span>
       </div>
 
       <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
