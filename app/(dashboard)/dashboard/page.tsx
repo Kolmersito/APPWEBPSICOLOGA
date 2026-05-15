@@ -49,10 +49,10 @@ export default function DashboardPage() {
     setDiaSeleccionado(dia)
     const fecha = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
     const citas = sesionesPorDia(dia)
-    if (citas.length === 0) {
-      router.push(`/consulta/nueva?fecha=${fecha}`)
-    } else if (citas.length === 1) {
+    if (citas.length === 1) {
       router.push(`/consulta/nueva?fecha=${fecha}&sesion=${citas[0].id}`)
+    } else {
+      router.push(`/consulta/nueva?fecha=${fecha}`)
     }
   }
 
@@ -158,6 +158,7 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+
       </div>
     </div>
   )

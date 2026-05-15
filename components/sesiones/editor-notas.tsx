@@ -16,6 +16,7 @@ interface EditorNotasProps {
 
 export function EditorNotas({ contenido, placeholder = 'Escribe aquí...', onChange, minHeight = 160 }: EditorNotasProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Underline,
@@ -81,16 +82,6 @@ export function EditorNotas({ contenido, placeholder = 'Escribe aquí...', onCha
         editor={editor}
         style={{ minHeight, padding: '10px 12px', fontSize: 13, lineHeight: 1.6, color: '#1F2937', outline: 'none' }}
       />
-
-      <style>{`
-        .tiptap p { margin: 0 0 8px; }
-        .tiptap p:last-child { margin-bottom: 0; }
-        .tiptap ul, .tiptap ol { padding-left: 18px; margin: 0 0 8px; }
-        .tiptap li { margin-bottom: 2px; }
-        .tiptap hr { border: none; border-top: 1px solid #E8E8E8; margin: 10px 0; }
-        .tiptap p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: #9CA3AF; float: left; height: 0; pointer-events: none; }
-        .tiptap:focus { outline: none; }
-      `}</style>
     </div>
   )
 }
