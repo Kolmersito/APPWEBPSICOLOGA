@@ -8,8 +8,17 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-    const { session_note_id, observaciones, sintomas, avances, temas } = await request.json()
+    const body = await request.json()
+    const { session_note_id, observaciones, sintomas, avances, temas, prompt_override } = body
 
+    // Informe con prompt personalizado
+    if (prompt_override) {
+      const result = await geminiModel.generateContent(prompt_override)
+      const texto = result.response.text().trim()
+      return NextResponse.json({ texto })
+    }
+
+    // Análisis de notas de sesión
     if (!observaciones && !sintomas && !temas) {
       return NextResponse.json({ error: 'No hay contenido para analizar' }, { status: 400 })
     }
@@ -25,10 +34,6 @@ ${temas ? `Temas tratados:\n${temas.replace(/<[^>]*>/g, '')}\n` : ''}
 Genera entre 2 y 4 sugerencias clínicas en formato JSON. Cada sugerencia debe tener:
 - "sugerencia": texto breve y útil (máximo 120 caracteres)
 - "tipo": uno de estos valores exactos: "alerta", "sugerencia", "punto_omitido"
-
-Usa "alerta" para señales de riesgo o patrones preocupantes.
-Usa "sugerencia" para técnicas o enfoques que podrían aplicarse.
-Usa "punto_omitido" para aspectos clínicos importantes que no se registraron.
 
 Responde ÚNICAMENTE con un array JSON válido, sin texto adicional, sin markdown, sin backticks. Ejemplo:
 [{"sugerencia":"texto aquí","tipo":"sugerencia"}]`
