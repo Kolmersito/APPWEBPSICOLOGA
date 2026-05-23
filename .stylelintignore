@@ -1,0 +1,8 @@
+node_modules
+.next
+public
+scripts
+**/*.js
+**/*.jsx
+**/*.ts
+**/*.tsx

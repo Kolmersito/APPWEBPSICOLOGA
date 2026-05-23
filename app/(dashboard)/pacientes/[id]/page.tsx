@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Topbar } from '@/components/layout/topbar'
-import { Plus, Calendar, FileText, Edit, ArrowLeft } from 'lucide-react'
+import { Plus, Calendar, FileText, Edit, ArrowLeft, Trash2 } from 'lucide-react'
 
 export default function PacienteDetallePage() {
   const { id } = useParams<{ id: string }>()
@@ -147,6 +147,15 @@ export default function PacienteDetallePage() {
                 onClick={() => router.push(`/pacientes/${id}/editar`)}
                 style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', color: 'var(--vino)', border: '0.5px solid var(--vino-border)', borderRadius: 6, padding: '8px', fontSize: 13, cursor: 'pointer', marginTop: 16 }}>
                 <Edit size={13} /> Editar datos
+              </button>
+              <button
+                onClick={async () => {
+                  if (!confirm(`¿Eliminar a ${paciente.nombre} ${paciente.apellido}? Esta acción eliminará también todas sus sesiones e informes.`)) return
+                  await supabase.from('patients').delete().eq('id', id)
+                  router.push('/pacientes')
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: 8 }}>
+                <Trash2 size={14} /> Eliminar paciente
               </button>
             </div>
           </div>

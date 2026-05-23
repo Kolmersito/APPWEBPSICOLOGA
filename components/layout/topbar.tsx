@@ -7,9 +7,12 @@ interface TopbarProps {
 
 export function Topbar({ title, children }: TopbarProps) {
   return (
-    <div style={{ background: '#fff', height: 52, display: 'flex', alignItems: 'center', padding: '0 24px', borderBottom: '1px solid #E8E8E8', gap: 12, flexShrink: 0 }}>
-      <div style={{ width: 3, height: 18, background: 'var(--vino)', borderRadius: 2, flexShrink: 0 }} />
-      <span style={{ fontSize: 15, fontWeight: 500, color: '#1F2937', flex: 1 }}>{title}</span>
+    <div style={{
+      background: '#fff', height: 56, display: 'flex', alignItems: 'center',
+      padding: '0 24px', borderBottom: '1px solid #F0F0F0', gap: 12, flexShrink: 0,
+      boxShadow: '0 1px 4px rgba(0,0,0,.04)'
+    }}>
+      <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937', flex: 1 }}>{title}</span>
       {children}
     </div>
   )

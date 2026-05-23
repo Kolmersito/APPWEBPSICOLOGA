@@ -4,10 +4,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --vino: #6B1F2A;
-  --vino-light: #8B2D3C;
-  --vino-pale: #F5E8EA;
-  --vino-border: #C4404F;
+  --vino: #ff4444;
+  --vino-light: #ff0000;
+  --vino-pale: #FDECEA;
+  --vino-border: #E8A09A;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -108,3 +108,15 @@ body {
 .tiptap hr { border: none; border-top: 1px solid #E8E8E8; margin: 10px 0; }
 .tiptap p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: #9CA3AF; float: left; height: 0; pointer-events: none; }
 .tiptap:focus { outline: none; }
+
+.nav-link:hover > div {
+  background: #F9FAFB !important;
+  color: #374151 !important;
+}
+
+.clickeable:hover {
+  background: #F9FAFB !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08) !important;
+  transform: translateY(-1px);
+  transition: all .15s;
+}
