@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Topbar } from '@/components/layout/topbar'
-import { FileText, Download, Edit, Plus, X, Sparkles } from 'lucide-react'
+import { FileText, Download, Edit, Plus, X, Sparkles, Trash2 } from 'lucide-react'
 
 export default function InformesPage() {
   const supabase = createClient()
@@ -146,6 +146,15 @@ El informe debe incluir: resumen clínico, evolución observada, áreas trabajad
                   }}
                   style={{ background: '#FAFAFA', border: '0.5px solid #E8E8E8', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', color: '#4B5563', display: 'flex', alignItems: 'center' }}>
                   <Download size={15} />
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!confirm('¿Eliminar este informe?')) return
+                    await supabase.from('reports').delete().eq('id', inf.id)
+                    setInformes(prev => prev.filter(i => i.id !== inf.id))
+                  }}
+                  style={{ background: '#FCEBEB', border: '0.5px solid #FCEBEB', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', color: '#A32D2D', display: 'flex', alignItems: 'center' }}>
+                  <Trash2 size={15} />
                 </button>
               </div>
             )
