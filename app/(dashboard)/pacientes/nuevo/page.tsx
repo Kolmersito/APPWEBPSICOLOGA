@@ -43,6 +43,17 @@ export default function NuevoPacientePage() {
     }).select().single()
 
     if (!error && data) {
+      // invalidate server cache so patient list updates immediately
+      try {
+        await fetch('/api/cache/invalidate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'patients' }),
+        })
+      } catch (e) {
+        console.warn('Cache invalidation failed', e)
+      }
+
       router.push(`/pacientes/${data.id}`)
     } else {
       console.error(error)

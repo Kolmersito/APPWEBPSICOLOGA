@@ -1,13 +1,9 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { Topbar } from '@/components/layout/topbar'
+import { getPatients } from '@/lib/supabase/queries'
 
 export default async function PacientesPage() {
-  const supabase = await createClient()
-  const { data: pacientes } = await supabase
-    .from('patients')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const pacientes: any[] = await getPatients()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

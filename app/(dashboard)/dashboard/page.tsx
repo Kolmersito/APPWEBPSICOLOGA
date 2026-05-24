@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Topbar } from '@/components/layout/topbar'
@@ -105,9 +106,9 @@ export default function DashboardPage () {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Topbar title="Inicio">
-        <a href="/consulta/nueva" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--vino)', color: '#fff', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+        <Link href="/consulta/nueva" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--vino)', color: '#fff', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
           + Nueva sesión
-        </a>
+        </Link>
       </Topbar>
 
       <div style={{ flex: 1, padding: '20px 24px', background: '#F7F8FA', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -205,9 +206,9 @@ export default function DashboardPage () {
                     <User size={22} color="#D1D5DB" />
                   </div>
                   <p style={{ fontSize: 13, color: '#9CA3AF', lineHeight: 1.6 }}>Sin sesiones este día</p>
-                  <a href="/consulta/nueva" style={{ marginTop: 12, fontSize: 13, color: 'var(--vino)', textDecoration: 'none', fontWeight: 600 }}>
+                  <Link href="/consulta/nueva" style={{ marginTop: 12, fontSize: 13, color: 'var(--vino)', textDecoration: 'none', fontWeight: 600 }}>
                     + Agregar sesión
-                  </a>
+                  </Link>
                 </div>
               ) : citasDelDia.map(c => (
                 <div key={c.id}

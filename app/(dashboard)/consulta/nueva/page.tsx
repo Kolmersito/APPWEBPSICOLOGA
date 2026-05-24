@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Topbar } from '@/components/layout/topbar'
@@ -327,7 +328,7 @@ export default function NuevaConsultaPage() {
           <div style={{ background: '#fff', border: '0.5px solid #E8E8E8', borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ padding: '12px 14px', borderBottom: '0.5px solid #E8E8E8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 13, fontWeight: 500, color: '#1F2937' }}>Material de apoyo</span>
-              <a href="/materiales" style={{ fontSize: 12, color: 'var(--vino)', textDecoration: 'none' }}>Ver todo →</a>
+              <Link href="/materiales" style={{ fontSize: 12, color: 'var(--vino)', textDecoration: 'none' }}>Ver todo →</Link>
             </div>
             <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
               {materiales.length === 0 ? (
