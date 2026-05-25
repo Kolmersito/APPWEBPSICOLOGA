@@ -26,6 +26,8 @@ export default function DashboardPage () {
   const [sesiones, setSesiones] = useState<any[]>([])
   const [diaSeleccionado, setDiaSeleccionado] = useState<number | null>(hoy.getDate())
   const [stats, setStats] = useState({ pacientes: 0, sesionesEsteMes: 0, informes: 0, sugerencias: 0 })
+  const [googleConnected, setGoogleConnected] = useState(false)
+  const [googleEvents, setGoogleEvents] = useState<any[]>([])
 
   useEffect(() => {
     async function load() {
@@ -65,6 +67,22 @@ export default function DashboardPage () {
     loadStats()
   }, [])
 
+  useEffect(() => {
+    async function loadCalendar() {
+      try {
+        const res = await fetch(`/api/calendario/eventos?mes=${mes + 1}&anio=${anio}`)
+        const calData = await res.json()
+        if (calData.connected) {
+          setGoogleConnected(true)
+          setGoogleEvents(calData.events || [])
+        }
+      } catch (e) {
+        console.error('Error fetching calendar', e)
+      }
+    }
+    loadCalendar()
+  }, [mes, anio])
+
   const primerDia = new Date(anio, mes, 1).getDay()
   const offset = primerDia === 0 ? 6 : primerDia - 1
   const diasEnMes = new Date(anio, mes + 1, 0).getDate()
@@ -72,6 +90,14 @@ export default function DashboardPage () {
   const sesionesPorDia = (dia: number) => {
     const fecha = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
     return sesiones.filter(s => s.fecha === fecha)
+  }
+
+  const eventosGooglePorDia = (dia: number) => {
+    const fecha = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+    return googleEvents.filter(e => {
+      const fechaEvento = e.start?.date || e.start?.dateTime?.split('T')[0]
+      return fechaEvento === fecha
+    })
   }
 
   const esHoy = (dia: number) =>
@@ -106,6 +132,16 @@ export default function DashboardPage () {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Topbar title="Inicio">
+        {!googleConnected ? (
+          <a href="/api/calendario/auth"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', color: '#4B5563', border: '1px solid #E5E7EB', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 500, textDecoration: 'none' }}>
+            📅 Conectar Google Calendar
+          </a>
+        ) : (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#F0FDF4', color: '#16A34A', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 500 }}>
+            ✓ Google Calendar
+          </span>
+        )}
         <Link href="/consulta/nueva" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--vino)', color: '#fff', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
           + Nueva sesión
         </Link>
@@ -157,7 +193,8 @@ export default function DashboardPage () {
               {Array.from({ length: offset }).map((_, i) => <div key={`e${i}`} />)}
               {Array.from({ length: diasEnMes }, (_, i) => i + 1).map(dia => {
                 const citas = sesionesPorDia(dia)
-                const tiene = citas.length > 0
+                const evGoogle = eventosGooglePorDia(dia)
+                const tiene = citas.length > 0 || evGoogle.length > 0
                 const today = esHoy(dia)
                 const seleccionado = diaSeleccionado === dia
 
@@ -185,7 +222,14 @@ export default function DashboardPage () {
                         </span>
                       </div>
                     ))}
-                    {citas.length > 2 && <span style={{ fontSize: 10, color: today ? 'rgba(255,255,255,.7)' : '#9CA3AF', marginTop: 2 }}>+{citas.length - 2}</span>}
+                    {evGoogle.slice(0, 2).map((ev, i) => (
+                      <div key={`g${i}`} style={{ width: '90%', marginTop: 3, background: today ? 'rgba(255,255,255,.25)' : '#EFF6FF', borderLeft: `2px solid ${today ? '#fff' : '#2563EB'}`, borderRadius: '0 4px 4px 0', padding: '1px 4px' }}>
+                        <span style={{ fontSize: 10, color: today ? '#fff' : '#2563EB', whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', textOverflow: 'ellipsis' }}>
+                          {ev.summary || 'Evento Google'}
+                        </span>
+                      </div>
+                    ))}
+                    {(citas.length + evGoogle.length) > 2 && <span style={{ fontSize: 10, color: today ? 'rgba(255,255,255,.7)' : '#9CA3AF', marginTop: 2 }}>+{(citas.length + evGoogle.length) - 2}</span>}
                   </div>
                 )
               })}
