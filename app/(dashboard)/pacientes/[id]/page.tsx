@@ -21,7 +21,7 @@ export default function PacienteDetallePage() {
         .from('patients')
         .select('*')
         .eq('id', id)
-        .single()
+        .maybeSingle()
       setPaciente(p)
 
       const { data: s } = await supabase
@@ -151,17 +151,12 @@ export default function PacienteDetallePage() {
               <button
                 onClick={async () => {
                   if (!confirm(`¿Eliminar a ${paciente.nombre} ${paciente.apellido}? Esta acción eliminará también todas sus sesiones e informes.`)) return
-                  await supabase.from('patients').delete().eq('id', id)
-                  try {
-                    await fetch('/api/cache/invalidate', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ key: 'patients' }),
-                    })
-                  } catch (e) {
-                    console.warn('Cache invalidation failed', e)
+                  const res = await fetch(`/api/pacientes/${id}`, { method: 'DELETE' })
+                  if (res.ok) {
+                    router.push('/pacientes')
+                  } else {
+                    alert('Error al eliminar paciente')
                   }
-                  router.push('/pacientes')
                 }}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FCEBEB', color: '#A32D2D', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: 8 }}>
                 <Trash2 size={14} /> Eliminar paciente

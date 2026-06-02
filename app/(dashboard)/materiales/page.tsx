@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import MaterialesClient from '@/components/materiales/MaterialesClient'
 import { getMaterials } from '@/lib/supabase/queries'
 

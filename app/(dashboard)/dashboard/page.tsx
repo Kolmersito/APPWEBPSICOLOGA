@@ -215,21 +215,42 @@ export default function DashboardPage () {
                       transition: 'all .15s',
                     }}>
                     <span style={{ fontSize: 13, fontWeight: seleccionado || today ? 700 : 400, color: seleccionado ? '#991B1B' : today ? '#fff' : '#374151' }}>{dia}</span>
+                    {/* Sesiones de la app */}
                     {citas.slice(0, 2).map((c, i) => (
-                      <div key={i} style={{ width: '90%', marginTop: 3, background: today ? 'rgba(255,255,255,.25)' : 'var(--vino-pale)', borderLeft: `2px solid ${today ? '#fff' : 'var(--vino)'}`, borderRadius: '0 4px 4px 0', padding: '1px 4px' }}>
-                        <span style={{ fontSize: 10, color: today ? '#fff' : 'var(--vino)', whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', textOverflow: 'ellipsis' }}>
-                          {c.patients?.nombre}
+                      <div key={i}
+                        onClick={(e) => { e.stopPropagation(); router.push(`/consulta/nueva?sesion=${c.id}`) }}
+                        style={{ width: '92%', marginTop: 4, background: today ? 'rgba(255,255,255,.25)' : 'var(--vino-pale)', borderLeft: `3px solid ${today ? '#fff' : 'var(--vino)'}`, borderRadius: '0 6px 6px 0', padding: '3px 6px', cursor: 'pointer' }}>
+                        <span style={{ fontSize: 11, fontWeight: 500, color: today ? '#fff' : 'var(--vino)', whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', textOverflow: 'ellipsis' }}>
+                          {c.patients?.nombre} {c.patients?.apellido}
                         </span>
                       </div>
                     ))}
-                    {evGoogle.slice(0, 2).map((ev, i) => (
-                      <div key={`g${i}`} style={{ width: '90%', marginTop: 3, background: today ? 'rgba(255,255,255,.25)' : '#EFF6FF', borderLeft: `2px solid ${today ? '#fff' : '#2563EB'}`, borderRadius: '0 4px 4px 0', padding: '1px 4px' }}>
-                        <span style={{ fontSize: 10, color: today ? '#fff' : '#2563EB', whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', textOverflow: 'ellipsis' }}>
-                          {ev.summary || 'Evento Google'}
+
+                    {/* Eventos de Google Calendar */}
+                    {eventosGooglePorDia(dia).slice(0, 2).map((e, i) => (
+                      <div key={`g${i}`}
+                        onClick={(ev) => {
+                          ev.stopPropagation()
+                          const fecha = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+                          const sesionRelacionada = citas.find(c => c.google_event_id === e.id)
+                          if (sesionRelacionada) {
+                            router.push(`/consulta/nueva?sesion=${sesionRelacionada.id}`)
+                          } else {
+                            router.push(`/consulta/nueva?fecha=${fecha}&gtitulo=${encodeURIComponent(e.summary || '')}`)
+                          }
+                        }}
+                        style={{ width: '92%', marginTop: 4, background: today ? 'rgba(255,255,255,.2)' : '#EFF6FF', borderLeft: `3px solid ${today ? '#fff' : '#2563EB'}`, borderRadius: '0 6px 6px 0', padding: '3px 6px', cursor: 'pointer' }}>
+                        <span style={{ fontSize: 11, fontWeight: 500, color: today ? '#fff' : '#2563EB', whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', textOverflow: 'ellipsis' }}>
+                          {e.summary}
                         </span>
                       </div>
                     ))}
-                    {(citas.length + evGoogle.length) > 2 && <span style={{ fontSize: 10, color: today ? 'rgba(255,255,255,.7)' : '#9CA3AF', marginTop: 2 }}>+{(citas.length + evGoogle.length) - 2}</span>}
+
+                    {(citas.length + eventosGooglePorDia(dia).length) > 2 && (
+                      <span style={{ fontSize: 10, color: today ? 'rgba(255,255,255,.7)' : '#9CA3AF', marginTop: 2 }}>
+                        +{citas.length + eventosGooglePorDia(dia).length - 2} más
+                      </span>
+                    )}
                   </div>
                 )
               })}

@@ -2,7 +2,6 @@
 
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Bold, Italic, UnderlineIcon, List, ListOrdered, AlignLeft, AlignCenter, Minus } from 'lucide-react'
@@ -18,11 +17,12 @@ export function EditorNotas({ contenido, placeholder = 'Escribe aquí...', onCha
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit,
-      Underline,
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      Placeholder.configure({ placeholder }),
-    ],
+  StarterKit.configure({
+    // desactiva los que manejas por separado
+  }),
+  TextAlign.configure({ types: ['heading', 'paragraph'] }),
+  Placeholder.configure({ placeholder }),
+],
     content: contenido || '',
     onUpdate: ({ editor }) => {
       onChange?.(editor.getHTML(), editor.getJSON())

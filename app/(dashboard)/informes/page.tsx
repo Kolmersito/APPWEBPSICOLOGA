@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import InformesClient from '@/components/informes/InformesClient'
 import { getReports, getPatients } from '@/lib/supabase/queries'
 

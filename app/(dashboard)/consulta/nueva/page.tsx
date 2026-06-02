@@ -28,6 +28,9 @@ export default function NuevaConsultaPage() {
 
   const fecha = searchParams.get('fecha') || new Date().toISOString().split('T')[0]
   const sesionId = searchParams.get('sesion')
+  const gTitulo = searchParams.get('gtitulo') || ''
+  const [tituloEvento, setTituloEvento] = useState(gTitulo)
+  
 
   const [saving, setSaving] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
@@ -88,51 +91,80 @@ export default function NuevaConsultaPage() {
     load()
   }, [sesionId])
 
-  const handleSave = async () => {
-    setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+const handleSave = async () => {
+  setSaving(true)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
 
-    let patientId: string
-    let sessionId: string = sesionId || ''
+  let sessionId: string = sesionId || ''
+  let patientId: string = ''
 
-    if (!sesionId) {
-      const { data: p } = await supabase.from('patients').insert({
-        psicologa_id: user.id,
+  if (!sesionId) {
+    // Crear nuevo paciente y sesión
+    const { data: p } = await supabase.from('patients').insert({
+      psicologa_id: user.id,
+      nombre: form.nombre,
+      apellido: form.apellido,
+      telefono: form.telefono,
+      email: form.email,
+      estado: 'activo',
+    }).select().single()
+
+    patientId = p!.id
+
+    const { data: s } = await supabase.from('sessions').insert({
+      patient_id: patientId,
+      fecha,
+      tipo: 'presencial',
+      estado: 'completada',
+    }).select().single()
+
+    sessionId = s!.id
+  } else {
+    // Actualizar datos del paciente existente
+    const { data: sesionActual } = await supabase
+      .from('sessions')
+      .select('patient_id')
+      .eq('id', sesionId)
+      .single()
+
+    if (sesionActual?.patient_id) {
+      patientId = sesionActual.patient_id
+      await supabase.from('patients').update({
         nombre: form.nombre,
         apellido: form.apellido,
         telefono: form.telefono,
         email: form.email,
-        estado: 'activo',
-      }).select().single()
-      patientId = p!.id
+      }).eq('id', patientId)
 
-      const { data: s } = await supabase.from('sessions').insert({
-        patient_id: patientId,
-        fecha,
-        tipo: 'presencial',
+      // Marcar sesión como completada
+      await supabase.from('sessions').update({
         estado: 'completada',
-      }).select().single()
-      sessionId = s!.id
+      }).eq('id', sesionId)
     }
-
-    const payload = {
-      session_id: sessionId,
-      observaciones, observaciones_json: observacionesJson,
-      sintomas, avances, temas_tratados: temas,
-      updated_at: new Date().toISOString(),
-    }
-
-    if (notes) {
-      await supabase.from('session_notes').update(payload).eq('id', notes.id)
-    } else {
-      const { data } = await supabase.from('session_notes').insert(payload).select().single()
-      setNotes(data)
-    }
-
-    setSaving(false)
-    router.push('/dashboard')
   }
+
+  // Guardar o actualizar notas
+  const payload = {
+    session_id: sessionId,
+    observaciones,
+    observaciones_json: observacionesJson,
+    sintomas,
+    avances,
+    temas_tratados: temas,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (notes) {
+    await supabase.from('session_notes').update(payload).eq('id', notes.id)
+  } else {
+    const { data } = await supabase.from('session_notes').insert(payload).select().single()
+    setNotes(data)
+  }
+
+  setSaving(false)
+  router.push('/dashboard')
+}
 
   const handleAnalyzeIA = async () => {
     if (!observaciones) return
@@ -186,7 +218,7 @@ export default function NuevaConsultaPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Topbar title={sesionId ? `${form.nombre} ${form.apellido} — Sesión` : 'Nueva consulta'}>
+      <Topbar title={sesionId ? `${form.nombre} ${form.apellido} — Sesión` : tituloEvento ? `Nueva sesión: ${tituloEvento}` : 'Nueva consulta'}>
         <button onClick={() => router.back()} style={{ background: '#fff', color: '#4B5563', border: '0.5px solid #E8E8E8', borderRadius: 6, padding: '7px 14px', fontSize: 13, cursor: 'pointer' }}>
           Cancelar
         </button>
