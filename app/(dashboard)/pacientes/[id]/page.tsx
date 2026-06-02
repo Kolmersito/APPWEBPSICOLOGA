@@ -153,7 +153,7 @@ export default function PacienteDetallePage() {
                   if (!confirm(`¿Eliminar a ${paciente.nombre} ${paciente.apellido}? Esta acción eliminará también todas sus sesiones e informes.`)) return
                   const res = await fetch(`/api/pacientes/${id}`, { method: 'DELETE' })
                   if (res.ok) {
-                    router.push('/pacientes')
+                    window.location.href = '/pacientes'
                   } else {
                     alert('Error al eliminar paciente')
                   }

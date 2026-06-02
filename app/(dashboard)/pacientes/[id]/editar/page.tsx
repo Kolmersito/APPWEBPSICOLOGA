@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Topbar } from '@/components/layout/topbar'
 
@@ -20,10 +20,12 @@ const card = {
   padding: 22,
 }
 
-export default function NuevoPacientePage() {
+export default function EditarPacientePage() {
+  const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const supabase = createClient()
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
     nombre: '', apellido: '', email: '', telefono: '',
     fecha_nacimiento: '', ocupacion: '', motivo_consulta: '', estado: 'activo',
@@ -31,14 +33,31 @@ export default function NuevoPacientePage() {
 
   const set = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }))
 
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase.from('patients').select('*').eq('id', id).maybeSingle()
+      if (data) {
+        setForm({
+          nombre: data.nombre || '',
+          apellido: data.apellido || '',
+          email: data.email || '',
+          telefono: data.telefono || '',
+          fecha_nacimiento: data.fecha_nacimiento || '',
+          ocupacion: data.ocupacion || '',
+          motivo_consulta: data.motivo_consulta || '',
+          estado: data.estado || 'activo',
+        })
+      }
+      setLoading(false)
+    }
+    load()
+  }, [id])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
 
-    const { data, error } = await supabase.from('patients').insert({
-      psicologa_id: user.id,
+    await supabase.from('patients').update({
       nombre: form.nombre,
       apellido: form.apellido,
       email: form.email || null,
@@ -47,31 +66,28 @@ export default function NuevoPacientePage() {
       ocupacion: form.ocupacion || null,
       motivo_consulta: form.motivo_consulta || null,
       estado: form.estado,
-    }).select().single()
+    }).eq('id', id)
 
-    if (!error && data) {
-      window.location.href = `/pacientes/${data.id}`
-    } else {
-      console.error(error)
-      setSaving(false)
-    }
+    window.location.href = `/pacientes/${id}`
   }
+
+  if (loading) return null
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Topbar title="Nuevo paciente">
+      <Topbar title="Editar paciente">
         <button type="button" onClick={() => router.back()}
           style={{ background: 'transparent', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 8, padding: '7px 16px', fontSize: 13, cursor: 'pointer', fontWeight: 500 }}>
           Cancelar
         </button>
-        <button type="submit" form="form-paciente" disabled={saving}
+        <button type="submit" form="form-editar" disabled={saving}
           style={{ background: 'var(--vino)', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? .7 : 1 }}>
-          {saving ? 'Guardando...' : 'Guardar paciente'}
+          {saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </Topbar>
 
       <div style={{ flex: 1, padding: '24px', background: '#F7F8FA', overflow: 'auto' }}>
-        <form id="form-paciente" onSubmit={handleSubmit}>
+        <form id="form-editar" onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 860 }}>
 
             <div style={card}>
@@ -83,20 +99,20 @@ export default function NuevoPacientePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
                     <label style={labelStyle}>Nombre *</label>
-                    <input required style={inputStyle} value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="Ana" />
+                    <input required style={inputStyle} value={form.nombre} onChange={e => set('nombre', e.target.value)} />
                   </div>
                   <div>
                     <label style={labelStyle}>Apellido *</label>
-                    <input required style={inputStyle} value={form.apellido} onChange={e => set('apellido', e.target.value)} placeholder="García" />
+                    <input required style={inputStyle} value={form.apellido} onChange={e => set('apellido', e.target.value)} />
                   </div>
                 </div>
                 <div>
                   <label style={labelStyle}>Correo electrónico</label>
-                  <input type="email" style={inputStyle} value={form.email} onChange={e => set('email', e.target.value)} placeholder="ana@correo.com" />
+                  <input type="email" style={inputStyle} value={form.email} onChange={e => set('email', e.target.value)} />
                 </div>
                 <div>
                   <label style={labelStyle}>Teléfono</label>
-                  <input style={inputStyle} value={form.telefono} onChange={e => set('telefono', e.target.value)} placeholder="+52 55 0000 0000" />
+                  <input style={inputStyle} value={form.telefono} onChange={e => set('telefono', e.target.value)} />
                 </div>
                 <div>
                   <label style={labelStyle}>Fecha de nacimiento</label>
@@ -104,7 +120,7 @@ export default function NuevoPacientePage() {
                 </div>
                 <div>
                   <label style={labelStyle}>Ocupación</label>
-                  <input style={inputStyle} value={form.ocupacion} onChange={e => set('ocupacion', e.target.value)} placeholder="Diseñadora, estudiante, etc." />
+                  <input style={inputStyle} value={form.ocupacion} onChange={e => set('ocupacion', e.target.value)} />
                 </div>
               </div>
             </div>
@@ -123,7 +139,6 @@ export default function NuevoPacientePage() {
                       rows={5}
                       value={form.motivo_consulta}
                       onChange={e => set('motivo_consulta', e.target.value)}
-                      placeholder="¿Por qué busca atención psicológica?"
                     />
                   </div>
                   <div>
