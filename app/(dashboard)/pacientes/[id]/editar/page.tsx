@@ -28,7 +28,7 @@ export default function EditarPacientePage() {
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
     nombre: '', apellido: '', email: '', telefono: '',
-    fecha_nacimiento: '', ocupacion: '', motivo_consulta: '', estado: 'activo',
+    fecha_nacimiento: '', ocupacion: '', motivo_consulta: '', estado: 'activo', edad: '',
   })
 
   const set = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }))
@@ -37,6 +37,9 @@ export default function EditarPacientePage() {
     async function load() {
       const { data } = await supabase.from('patients').select('*').eq('id', id).maybeSingle()
       if (data) {
+        const edad = data.fecha_nacimiento
+          ? new Date().getFullYear() - new Date(data.fecha_nacimiento).getFullYear()
+          : ''
         setForm({
           nombre: data.nombre || '',
           apellido: data.apellido || '',
@@ -46,6 +49,7 @@ export default function EditarPacientePage() {
           ocupacion: data.ocupacion || '',
           motivo_consulta: data.motivo_consulta || '',
           estado: data.estado || 'activo',
+          edad: edad ? edad.toString() : '',
         })
       }
       setLoading(false)
@@ -119,36 +123,18 @@ export default function EditarPacientePage() {
                   <input type="date" style={inputStyle} value={form.fecha_nacimiento} onChange={e => set('fecha_nacimiento', e.target.value)} />
                 </div>
                 <div>
+                  <label style={labelStyle}>Edad</label>
+                  <input type="number" min="0" max="120" style={inputStyle} value={form.edad} onChange={e => {
+                    const edad = parseInt(e.target.value) || 0
+                    const fechaNacimiento = new Date()
+                    fechaNacimiento.setFullYear(new Date().getFullYear() - edad)
+                    set('edad', e.target.value)
+                    set('fecha_nacimiento', fechaNacimiento.toISOString().split('T')[0])
+                  }} />
+                </div>
+                <div>
                   <label style={labelStyle}>Ocupación</label>
                   <input style={inputStyle} value={form.ocupacion} onChange={e => set('ocupacion', e.target.value)} />
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={card}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-                  <div style={{ width: 4, height: 18, background: 'var(--vino)', borderRadius: 2 }} />
-                  <span style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>Información clínica</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div>
-                    <label style={labelStyle}>Motivo de consulta</label>
-                    <textarea
-                      style={{ ...inputStyle, resize: 'none' } as React.CSSProperties}
-                      rows={5}
-                      value={form.motivo_consulta}
-                      onChange={e => set('motivo_consulta', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Estado</label>
-                    <select style={inputStyle} value={form.estado} onChange={e => set('estado', e.target.value)}>
-                      <option value="activo">Activo</option>
-                      <option value="en_pausa">En pausa</option>
-                      <option value="alta">Alta</option>
-                    </select>
-                  </div>
                 </div>
               </div>
             </div>

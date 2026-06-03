@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
@@ -28,6 +29,13 @@ export function EditorNotas({ contenido, placeholder = 'Escribe aquí...', onCha
       onChange?.(editor.getHTML(), editor.getJSON())
     },
   })
+
+  // Actualizar el contenido del editor cuando la prop cambial
+  useEffect(() => {
+    if (editor && contenido !== undefined) {
+      editor.commands.setContent(contenido || '')
+    }
+  }, [contenido, editor])
 
   if (!editor) return null
 

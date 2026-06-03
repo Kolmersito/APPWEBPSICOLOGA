@@ -17,6 +17,7 @@ export default function SesionPage() {
   const [activities, setActivities] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [observaciones, setObservaciones] = useState('')
   const [observacionesJson, setObservacionesJson] = useState<object>({})
   const [sintomas, setSintomas] = useState('')
@@ -66,23 +67,38 @@ export default function SesionPage() {
 
   const handleSave = async () => {
     setSaving(true)
-    const payload = {
-      session_id: id,
-      observaciones,
-      observaciones_json: observacionesJson,
-      sintomas,
-      avances,
-      temas_tratados: temas,
-      updated_at: new Date().toISOString(),
-    }
+    try {
+      const payload = {
+        session_id: id,
+        observaciones,
+        observaciones_json: observacionesJson,
+        sintomas,
+        avances,
+        temas_tratados: temas,
+        updated_at: new Date().toISOString(),
+      }
 
-    if (notes) {
-      await supabase.from('session_notes').update(payload).eq('id', notes.id)
-    } else {
-      const { data } = await supabase.from('session_notes').insert(payload).select().single()
-      setNotes(data)
+      let result
+      if (notes) {
+        result = await supabase.from('session_notes').update(payload).eq('id', notes.id)
+      } else {
+        result = await supabase.from('session_notes').insert(payload).select().single()
+        if (result.data) setNotes(result.data)
+      }
+
+      if (result.error) {
+        console.error('Error guardando sesión:', result.error)
+        setSaveMessage(`❌ Error: ${result.error.message}`)
+      } else {
+        setSaveMessage('✓ Guardado correctamente')
+        setTimeout(() => setSaveMessage(null), 2000)
+      }
+    } catch (error) {
+      console.error('Error inesperado:', error)
+      setSaveMessage('❌ Error inesperado al guardar')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   const handleAnalyzeIA = async () => {
@@ -127,7 +143,12 @@ export default function SesionPage() {
         <button style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', color: '#4B5563', border: '0.5px solid #E8E8E8', borderRadius: 6, padding: '6px 12px', fontSize: 12, cursor: 'pointer' }}>
           Materiales
         </button>
-        <button onClick={handleSave} disabled={saving} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--vino)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+        {saveMessage && (
+          <span style={{ fontSize: 12, fontWeight: 500, color: saveMessage.includes('❌') ? '#A32D2D' : '#3B6D11' }}>
+            {saveMessage}
+          </span>
+        )}
+        <button onClick={handleSave} disabled={saving} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--vino)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
           {saving ? 'Guardando...' : 'Guardar'}
         </button>
       </Topbar>
