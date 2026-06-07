@@ -253,7 +253,7 @@ const handleSave = async () => {
         </button>
       </Topbar>
 
-      <div style={{ flex: 1, padding: '16px 20px', background: '#FAFAFA', overflow: 'auto', display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16 }}>
+      <div className="two-col-grid" style={{ flex: 1, padding: '16px 20px', background: '#FAFAFA', overflow: 'auto', display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16 }}>
 
         {/* FORMULARIO PRINCIPAL */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -302,7 +302,7 @@ const handleSave = async () => {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div style={{ background: '#fff', border: '0.5px solid #E8E8E8', borderRadius: 10, padding: 18 }}>
               <div style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', marginBottom: 12 }}>Síntomas detectados</div>
               <EditorNotas contenido={sintomas} placeholder="Lista síntomas observados..." onChange={(html) => setSintomas(html)} minHeight={110} />

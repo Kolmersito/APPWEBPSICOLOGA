@@ -70,11 +70,13 @@ export default function DashboardPage () {
   useEffect(() => {
     async function loadCalendar() {
       try {
-        const res = await fetch(`/api/calendario/eventos?mes=${mes + 1}&anio=${anio}`)
+              const res = await fetch(`/api/calendario/eventos?mes=${mes + 1}&anio=${anio}&t=${Date.now()}`)
         const calData = await res.json()
+        console.log('Respuesta calendario:', calData)
         if (calData.connected) {
           setGoogleConnected(true)
           setGoogleEvents(calData.events || [])
+          console.log('Eventos cargados:', calData.events?.length)
         }
       } catch (e) {
         console.error('Error fetching calendar', e)
@@ -142,15 +144,34 @@ export default function DashboardPage () {
             ✓ Google Calendar
           </span>
         )}
+
+        <button
+          onClick={async () => {
+            try {
+              const res = await fetch(`/api/calendario/eventos?mes=${mes + 1}&anio=${anio}&t=${Date.now()}`)
+              const calData = await res.json()
+              if (calData.connected) {
+                setGoogleConnected(true)
+                setGoogleEvents(calData.events || [])
+              }
+            } catch (e) {
+              console.error(e)
+            }
+          }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#F9FAFB', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 8, padding: '7px 12px', fontSize: 13, cursor: 'pointer' }}
+          title="Actualizar calendario">
+          🔄
+        </button>
+
         <Link href="/consulta/nueva" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--vino)', color: '#fff', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
           + Nueva sesión
         </Link>
       </Topbar>
 
-      <div style={{ flex: 1, padding: '20px 24px', background: '#F7F8FA', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ flex: 1, padding: '20px 24px', background: '#F7F8FA', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }} className="content-padding">
 
         {/* STATS */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }} className="stats-grid">
           {statCards.map(({ label, value, icon: Icon, color, iconColor }) => (
             <div key={label} style={{ ...card, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 44, height: 44, borderRadius: 10, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -165,7 +186,7 @@ export default function DashboardPage () {
         </div>
 
         {/* CALENDARIO + PANEL */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 16, flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 16, flex: 1 }} className="cal-panel-grid">
 
           {/* CALENDARIO */}
           <div style={{ ...card, padding: 24, display: 'flex', flexDirection: 'column' }}>

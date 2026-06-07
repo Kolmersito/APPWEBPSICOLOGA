@@ -14,11 +14,13 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login`)
 
-    await supabase.from('profiles').update({
+    const updateData: any = {
       google_access_token: tokens.access_token,
-      google_refresh_token: tokens.refresh_token,
       google_token_expiry: tokens.expiry_date,
-    }).eq('id', user.id)
+    }
+    if (tokens.refresh_token) updateData.google_refresh_token = tokens.refresh_token
+
+    await supabase.from('profiles').update(updateData).eq('id', user.id)
 
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard?calendar=connected`)
   } catch (error) {
