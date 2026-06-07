@@ -14,6 +14,7 @@ export default function SesionPage() {
   const [session, setSession] = useState<any>(null)
   const [notes, setNotes] = useState<any>(null)
   const [suggestions, setSuggestions] = useState<any[]>([])
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
   const [activities, setActivities] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
@@ -105,21 +106,45 @@ export default function SesionPage() {
     if (!notes && !observaciones) return
     setAnalyzing(true)
 
-    const res = await fetch('/api/ai/analizar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_note_id: notes?.id,
-        observaciones,
-        sintomas,
-        avances,
-        temas,
-      }),
-    })
+    try {
+      const res = await fetch('/api/ai/analizar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_note_id: notes?.id,
+          observaciones,
+          sintomas,
+          avances,
+          temas,
+        }),
+      })
 
-    const data = await res.json()
-    if (data.suggestions) setSuggestions(data.suggestions)
-    setAnalyzing(false)
+      if (!res.ok) {
+        throw new Error(`Error en la API: ${res.statusText}`)
+      }
+
+      const data = await res.json()
+      
+      // Manejo de respuesta del análisis
+      if (data.error) {
+        console.error('Error en análisis:', data.error)
+        setAiAnalysis(null)
+      } else {
+        // El endpoint ahora devuelve texto de análisis
+        const analysisText = data.suggestions || data.texto || data.result || data.text || 'No se obtuvo análisis'
+        setAiAnalysis(analysisText)
+        
+        // Si había sugerencias previas estructuradas, las conservamos
+        if (data.suggestions && Array.isArray(data.suggestions)) {
+          setSuggestions(data.suggestions)
+        }
+      }
+    } catch (error) {
+      console.error('Error analizando con IA:', error)
+      setAiAnalysis('Error al conectar con IA')
+    } finally {
+      setAnalyzing(false)
+    }
   }
 
   const toggleActividad = async (act: any) => {
@@ -223,7 +248,7 @@ export default function SesionPage() {
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: suggestions.length > 0 ? '#3B6D11' : '#9CA3AF' }} />
             </div>
 
-            {suggestions.length === 0 ? (
+            {!aiAnalysis && suggestions.length === 0 ? (
               <div style={{ padding: 14 }}>
                 <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12, lineHeight: 1.5 }}>
                   Guarda las notas y analiza con IA para obtener sugerencias clínicas.
@@ -235,6 +260,13 @@ export default function SesionPage() {
               </div>
             ) : (
               <>
+                {aiAnalysis && (
+                  <div style={{ padding: '12px 14px', borderBottom: '0.5px solid #E8E8E8' }}>
+                    <div style={{ fontSize: 11, color: '#4B5563', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      {aiAnalysis}
+                    </div>
+                  </div>
+                )}
                 {suggestions.map((s) => {
                   const c = tipColor(s.tipo)
                   return (

@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Topbar } from '@/components/layout/topbar'
 import { FileText, Download, Edit, Plus, X, Sparkles, Trash2 } from 'lucide-react'
+import { exportarInformePDF } from '@/lib/export-pdf'
 
 export default function InformesClient({ initialInformes, initialPacientes }: { initialInformes: any[]; initialPacientes: any[] }) {
+  const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [informes, setInformes] = useState<any[]>(initialInformes || [])
@@ -36,19 +39,30 @@ export default function InformesClient({ initialInformes, initialPacientes }: { 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data: sesiones } = await supabase
+    // Límites para regular el consumo de tokens del informe
+    const MAX_SESIONES = 20   // solo las sesiones más recientes
+    const MAX_CAMPO = 1500    // máximo de caracteres por campo de nota
+
+    const limitar = (t: string | null | undefined) =>
+      !t ? '—' : (t.length > MAX_CAMPO ? t.slice(0, MAX_CAMPO) + '…' : t)
+
+    // Traemos las más recientes y luego las reordenamos cronológicamente para el informe.
+    const { data: sesionesRaw } = await supabase
       .from('sessions')
       .select('*, session_notes(observaciones, sintomas, avances, temas_tratados)')
       .eq('patient_id', form.patient_id)
       .eq('estado', 'completada')
-      .order('fecha', { ascending: true })
+      .order('fecha', { ascending: false })
+      .limit(MAX_SESIONES)
+
+    const sesiones = (sesionesRaw || []).slice().reverse()
 
     const paciente = pacientes.find(p => p.id === form.patient_id)
 
-    const contenidoSesiones = sesiones?.map((s, i) => {
+    const contenidoSesiones = sesiones.map((s, i) => {
       const n = s.session_notes?.[0]
       if (!n) return ''
-      return `Sesión ${i + 1} (${s.fecha}):\nObservaciones: ${n.observaciones?.replace(/<[^>]*>/g, '') || '—'}\nSíntomas: ${n.sintomas?.replace(/<[^>]*>/g, '') || '—'}\nAvances: ${n.avances?.replace(/<[^>]*>/g, '') || '—'}\nTemas: ${n.temas_tratados?.replace(/<[^>]*>/g, '') || '—'}`
+      return `Sesión ${i + 1} (${s.fecha}):\nObservaciones: ${limitar(n.observaciones?.replace(/<[^>]*>/g, ''))}\nSíntomas: ${limitar(n.sintomas?.replace(/<[^>]*>/g, ''))}\nAvances: ${limitar(n.avances?.replace(/<[^>]*>/g, ''))}\nTemas: ${limitar(n.temas_tratados?.replace(/<[^>]*>/g, ''))}`
     }).filter(Boolean).join('\n\n')
 
     const prompt = `Eres una psicóloga clínica redactando un informe profesional. Basándote en las siguientes notas de sesión, redacta un informe de ${form.tipo === 'evolucion' ? 'evolución terapéutica' : form.tipo === 'inicial' ? 'evaluación inicial' : 'alta'} para el paciente ${paciente?.nombre} ${paciente?.apellido}.\n\nNOTAS DE SESIONES:\n${contenidoSesiones || 'Sin notas disponibles'}\n\nEl informe debe incluir: resumen clínico, evolución observada, áreas trabajadas, logros alcanzados y recomendaciones. Usa un tono profesional y clínico. Responde en español.`
@@ -59,8 +73,17 @@ export default function InformesClient({ initialInformes, initialPacientes }: { 
       body: JSON.stringify({ prompt_override: prompt }),
     })
 
+    if (!res.ok) {
+      throw new Error(`Error en la API: ${res.statusText}`)
+    }
+
     const aiData = await res.json()
-    const contenido = aiData.texto || 'No se pudo generar el informe.'
+    
+    if (aiData.error) {
+      throw new Error(`Error de análisis: ${aiData.error}`)
+    }
+
+    const contenido = aiData.texto || aiData.result || aiData.text || 'No se pudo generar el informe.'
 
     await supabase.from('reports').insert({
       patient_id: form.patient_id,
@@ -125,12 +148,23 @@ export default function InformesClient({ initialInformes, initialPacientes }: { 
           ) : informes.map((inf, i) => {
             const paciente = (inf as any).patients
             return (
-              <div key={inf.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: i < informes.length - 1 ? '0.5px solid #E8E8E8' : 'none' }}>
+              <div
+                key={inf.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '14px 18px',
+                  borderBottom: i < informes.length - 1 ? '0.5px solid #E8E8E8' : 'none',
+                  cursor: 'pointer',
+                }}
+                onClick={() => router.push(`/informes/${inf.id}`)}
+              >
                 <div style={{ width: 38, height: 38, background: 'var(--vino-pale)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--vino)', flexShrink: 0 }}>
                   <FileText size={17} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1F2937' }}>{inf.titulo}</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', textDecoration: 'underline' }}>{inf.titulo}</div>
                   <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>
                     {paciente ? `${paciente.nombre} ${paciente.apellido}` : '—'} · {new Date(inf.created_at).toLocaleDateString('es-MX')}
                   </div>
@@ -143,20 +177,13 @@ export default function InformesClient({ initialInformes, initialPacientes }: { 
                   {inf.estado === 'finalizado' ? 'Finalizado' : 'Borrador'}
                 </span>
                 <button
-                  onClick={() => {
-                    const texto = inf.contenido_json?.texto || ''
-                    const blob = new Blob([texto], { type: 'text/plain' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = `${inf.titulo}.txt`
-                    a.click()
-                  }}
+                  onClick={(e) => { e.stopPropagation(); exportarInformePDF(inf, paciente) }}
                   style={{ background: '#FAFAFA', border: '0.5px solid #E8E8E8', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', color: '#4B5563', display: 'flex', alignItems: 'center' }}>
                   <Download size={15} />
                 </button>
                 <button
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    e.stopPropagation();
                     if (!confirm('¿Eliminar este informe?')) return
                     await supabase.from('reports').delete().eq('id', inf.id)
                     setInformes(prev => prev.filter(i => i.id !== inf.id))

@@ -37,6 +37,7 @@ export default function NuevaConsultaPage() {
   const [consejo] = useState(consejos[Math.floor(Math.random() * consejos.length)])
   const [materiales, setMateriales] = useState<any[]>([])
   const [suggestions, setSuggestions] = useState<any[]>([])
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
   const [activities, setActivities] = useState<any[]>([])
   const [nuevaActividad, setNuevaActividad] = useState('')
   const [notes, setNotes] = useState<any>(null)
@@ -169,14 +170,39 @@ const handleSave = async () => {
   const handleAnalyzeIA = async () => {
     if (!observaciones) return
     setAnalyzing(true)
-    const res = await fetch('/api/ai/analizar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session_note_id: notes?.id, observaciones, sintomas, avances, temas }),
-    })
-    const data = await res.json()
-    if (data.suggestions) setSuggestions(data.suggestions)
-    setAnalyzing(false)
+    
+    try {
+      const res = await fetch('/api/ai/analizar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_note_id: notes?.id, observaciones, sintomas, avances, temas }),
+      })
+      
+      if (!res.ok) {
+        throw new Error(`Error en la API: ${res.statusText}`)
+      }
+
+      const data = await res.json()
+      
+      if (data.error) {
+        console.error('Error en análisis:', data.error)
+        setAiAnalysis(null)
+      } else {
+        // El endpoint ahora devuelve texto de análisis
+        const analysisText = data.suggestions || data.texto || data.result || data.text || 'No se obtuvo análisis'
+        setAiAnalysis(analysisText)
+        
+        // Si había sugerencias previas estructuradas, las conservamos
+        if (data.suggestions && Array.isArray(data.suggestions)) {
+          setSuggestions(data.suggestions)
+        }
+      }
+    } catch (error) {
+      console.error('Error analizando con IA:', error)
+      setAiAnalysis('Error al conectar con IA')
+    } finally {
+      setAnalyzing(false)
+    }
   }
 
   const agregarActividad = async () => {
@@ -304,7 +330,7 @@ const handleSave = async () => {
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: suggestions.length > 0 ? '#3B6D11' : '#9CA3AF' }} />
             </div>
 
-            {suggestions.length === 0 ? (
+            {!aiAnalysis && suggestions.length === 0 ? (
               <div style={{ padding: 14 }}>
                 <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 10, lineHeight: 1.5, fontStyle: 'italic' }}>"{consejo}"</p>
                 <button onClick={handleAnalyzeIA} disabled={analyzing || !observaciones}
@@ -315,6 +341,13 @@ const handleSave = async () => {
               </div>
             ) : (
               <>
+                {aiAnalysis && (
+                  <div style={{ padding: '12px 14px', borderBottom: '0.5px solid #E8E8E8' }}>
+                    <div style={{ fontSize: 11, color: '#4B5563', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      {aiAnalysis}
+                    </div>
+                  </div>
+                )}
                 {suggestions.map((s) => {
                   const c = tipColor(s.tipo)
                   return (
